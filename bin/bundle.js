@@ -34,7 +34,7 @@
 /******/ 	__webpack_require__.c = installedModules;
 /******/
 /******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
+/******/ 	__webpack_require__.p = "/bin/";
 /******/
 /******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(0);
@@ -52,7 +52,30 @@
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
-	window.console.log(THREE);
+	var scene = new THREE.Scene();
+	var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+	
+	var renderer = new THREE.WebGLRenderer();
+	renderer.setSize(window.innerWidth, window.innerHeight);
+	window.document.body.appendChild(renderer.domElement);
+	
+	var geometry = new THREE.BoxGeometry(1, 1, 1);
+	var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+	var cube = new THREE.Mesh(geometry, material);
+	scene.add(cube);
+	
+	camera.position.z = 5;
+	
+	function render() {
+	  window.requestAnimationFrame(render);
+	
+	  // Should be time dependent not frame dependent but who cares this is a demo
+	  cube.rotation.x += 0.1 * (60 / 165);
+	  cube.rotation.y += 0.1 * (60 / 165);
+	
+	  renderer.render(scene, camera);
+	}
+	render();
 
 /***/ },
 /* 1 */
