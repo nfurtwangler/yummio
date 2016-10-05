@@ -1,0 +1,37 @@
+{
+  "name": "yummio",
+  "version": "1.0.0",
+  "description": "Yumm.io WebGL game",
+  "main": "index.html",
+  "scripts": {
+    "build": "webpack --progress --colors",
+    "start": "webpack-dev-server --inline --hot --progress --colors --open",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nfurtwangler/yummio.git"
+  },
+  "author": "Nathan Furtwangler",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nfurtwangler/yummio/issues"
+  },
+  "homepage": "https://github.com/nfurtwangler/yummio#readme",
+  "devDependencies": {
+    "babel-core": "^6.17.0",
+    "babel-loader": "^6.2.5",
+    "babel-preset-es2015": "^6.16.0",
+    "eslint": "^3.7.1",
+    "eslint-config-airbnb": "^12.0.0",
+    "eslint-loader": "^1.5.0",
+    "eslint-plugin-import": "^1.16.0",
+    "eslint-plugin-jsx-a11y": "^2.2.2",
+    "eslint-plugin-react": "^6.3.0",
+    "webpack": "^1.13.2",
+    "webpack-dev-server": "^1.16.1"
+  },
+  "dependencies": {
+    "three": "^0.81.2"
+  }
+}
