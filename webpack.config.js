@@ -1,5 +1,5 @@
 module.exports = {
-  entry: './src/app.js',
+  entry: './src/js/app.js',
   output: {
     path: './bin/',
     filename: 'bundle.js',
@@ -13,8 +13,12 @@ module.exports = {
       {
         test: /\.js$/,
         exclude: /node_modules/,
-        loaders: ['babel-loader', 'eslint-loader'],
-      }
+        loaders: ['babel', 'eslint'],
+      },
+      {
+        test: /\.css$/,
+        loaders: ['style', 'css'],
+      },
     ],
   },
 };
