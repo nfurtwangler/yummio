@@ -50,7 +50,7 @@
 	
 	var _game2 = _interopRequireDefault(_game);
 	
-	__webpack_require__(4);
+	__webpack_require__(5);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -87,6 +87,10 @@
 	
 	var _threeOrbitControls2 = _interopRequireDefault(_threeOrbitControls);
 	
+	var _edible = __webpack_require__(4);
+	
+	var _edible2 = _interopRequireDefault(_edible);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -99,34 +103,84 @@
 	  function Game(width, height) {
 	    _classCallCheck(this, Game);
 	
-	    this.renderer = new THREE.WebGLRenderer();
 	    this.scene = new THREE.Scene();
-	    this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-	    this.controls = new OrbitControls(this.camera, this.domElement);
-	    this.controls.minDistance = 300;
-	    this.controls.maxDistance = 600;
-	    this.controls.minPolarAngle = 0;
-	    this.controls.maxPolarAngle = Math.PI / 2.5;
 	
+	    this.renderer = new THREE.WebGLRenderer();
 	    this.renderer.setSize(width, height);
 	
-	    var groundGeo = new THREE.PlaneGeometry(400, 400);
-	    var groundMat = new THREE.MeshBasicMaterial({ color: 0x00CC1F });
+	    this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+	
+	    var ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+	    var himisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.75);
+	    this.scene.add(ambientLight);
+	    this.scene.add(himisphereLight);
+	
+	    this.controls = new OrbitControls(this.camera, this.domElement);
+	    this.controls.minDistance = 10;
+	    this.controls.maxDistance = 300;
+	    this.controls.minPolarAngle = 0;
+	    this.controls.maxPolarAngle = Math.PI / 2.5;
+	    this.setInitialCameraPos = false;
+	
+	    var boardX = 400;
+	    var boardY = 400;
+	    var groundGeo = new THREE.PlaneGeometry(boardX, boardY);
+	    var groundMat = new THREE.MeshStandardMaterial({ color: 0x00CC1F });
 	    var ground = new THREE.Mesh(groundGeo, groundMat);
-	    ground.position.y = -1.9;
+	    ground.position.y = -0.5;
 	    ground.rotation.x = -Math.PI / 2;
 	    this.scene.add(ground);
+	
+	    var initialEdibleCount = 50;
+	    for (var i = 0; i < initialEdibleCount; i++) {
+	      var rx = (Math.random() - 0.5) * boardX;
+	      var rz = (Math.random() - 0.5) * boardY;
+	      this.addEdible(rx, 0, rz);
+	    }
 	  }
 	
 	  _createClass(Game, [{
 	    key: 'update',
 	    value: function update() {
-	      this.controls.update();
+	      if (this.setInitialCameraPos === false) {
+	        this.setInitialCameraPosition();
+	      } else {
+	        this.controls.update();
+	      }
 	    }
 	  }, {
 	    key: 'draw',
 	    value: function draw() {
 	      this.renderer.render(this.scene, this.camera);
+	    }
+	  }, {
+	    key: 'setInitialCameraPosition',
+	    value: function setInitialCameraPosition() {
+	      this.setInitialCameraPos = true;
+	      var minDistance = this.controls.minDistance;
+	      var maxDistance = this.controls.maxDistance;
+	      var minPolarAngle = this.controls.minPolarAngle;
+	      var maxPolarAngle = this.controls.maxPolarAngle;
+	      this.controls.minDistance = 100;
+	      this.controls.maxDistance = this.controls.minDistance;
+	      this.controls.minPolarAngle = Math.PI / 3;
+	      this.controls.maxPolarAngle = this.controls.minPolarAngle;
+	      this.controls.update();
+	      this.controls.minDistance = minDistance;
+	      this.controls.maxDistance = maxDistance;
+	      this.controls.minPolarAngle = minPolarAngle;
+	      this.controls.maxPolarAngle = maxPolarAngle;
+	    }
+	  }, {
+	    key: 'addEdible',
+	    value: function addEdible(x, y, z) {
+	      var color = Math.random() * 0xFFFFFF;
+	      var edible = new _edible2.default(color);
+	      edible.position.x = x;
+	      edible.position.y = y;
+	      edible.position.z = z;
+	
+	      this.scene.add(edible.mesh);
 	    }
 	  }, {
 	    key: 'domElement',
@@ -43066,13 +43120,54 @@
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _three = __webpack_require__(2);
+	
+	var THREE = _interopRequireWildcard(_three);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var Edible = function () {
+	  function Edible(color) {
+	    _classCallCheck(this, Edible);
+	
+	    var geo = new THREE.BoxGeometry(1, 1, 1);
+	    var mat = new THREE.MeshStandardMaterial({ color: color });
+	    this.mesh = new THREE.Mesh(geo, mat);
+	  }
+	
+	  _createClass(Edible, [{
+	    key: 'position',
+	    get: function get() {
+	      return this.mesh.position;
+	    }
+	  }]);
+	
+	  return Edible;
+	}();
+	
+	exports.default = Edible;
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(5);
+	var content = __webpack_require__(6);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(7)(content, {});
+	var update = __webpack_require__(8)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -43089,10 +43184,10 @@
 	}
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(6)();
+	exports = module.exports = __webpack_require__(7)();
 	// imports
 	
 	
@@ -43103,7 +43198,7 @@
 
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports) {
 
 	/*
@@ -43159,7 +43254,7 @@
 
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
