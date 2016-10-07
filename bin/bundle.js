@@ -50,7 +50,7 @@
 	
 	var _game2 = _interopRequireDefault(_game);
 	
-	__webpack_require__(5);
+	__webpack_require__(6);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -91,6 +91,10 @@
 	
 	var _edible2 = _interopRequireDefault(_edible);
 	
+	var _keyboard = __webpack_require__(5);
+	
+	var _keyboard2 = _interopRequireDefault(_keyboard);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
@@ -115,28 +119,34 @@
 	    this.scene.add(ambientLight);
 	    this.scene.add(himisphereLight);
 	
-	    this.controls = new OrbitControls(this.camera, this.domElement);
-	    this.controls.minDistance = 10;
-	    this.controls.maxDistance = 300;
-	    this.controls.minPolarAngle = 0;
-	    this.controls.maxPolarAngle = Math.PI / 2.5;
+	    this.cameraControls = new OrbitControls(this.camera, this.domElement);
+	    this.cameraControls.minDistance = 10;
+	    this.cameraControls.maxDistance = 300;
+	    this.cameraControls.minPolarAngle = 0;
+	    this.cameraControls.maxPolarAngle = Math.PI / 2.5;
 	    this.setInitialCameraPos = false;
+	
+	    this.keyboard = new _keyboard2.default(this.domElement);
 	
 	    var boardX = 400;
 	    var boardY = 400;
 	    var groundGeo = new THREE.PlaneGeometry(boardX, boardY);
 	    var groundMat = new THREE.MeshStandardMaterial({ color: 0x00CC1F });
 	    var ground = new THREE.Mesh(groundGeo, groundMat);
-	    ground.position.y = -0.5;
 	    ground.rotation.x = -Math.PI / 2;
 	    this.scene.add(ground);
 	
 	    var initialEdibleCount = 50;
+	    this.edibles = [];
 	    for (var i = 0; i < initialEdibleCount; i++) {
 	      var rx = (Math.random() - 0.5) * boardX;
 	      var rz = (Math.random() - 0.5) * boardY;
-	      this.addEdible(rx, 0, rz);
+	      var rc = Math.random() * 0xFFFFFF;
+	      this.addEdible(rx, 0, rz, rc);
 	    }
+	
+	    this.player = this.addEdible(0, 0, 0, 0xFFFFFF);
+	    this.player.energy = 2;
 	  }
 	
 	  _createClass(Game, [{
@@ -145,7 +155,9 @@
 	      if (this.setInitialCameraPos === false) {
 	        this.setInitialCameraPosition();
 	      } else {
-	        this.controls.update();
+	        this.handleInput();
+	        this.eatEdibles();
+	        this.cameraControls.update();
 	      }
 	    }
 	  }, {
@@ -154,33 +166,81 @@
 	      this.renderer.render(this.scene, this.camera);
 	    }
 	  }, {
+	    key: 'handleInput',
+	    value: function handleInput() {
+	      var dx = 0;
+	      var dz = 0;
+	      var dtick = 0.1; // TODO: should be time dependent
+	      if (this.keyboard.isKeyPressed('w')) {
+	        dz = -dtick;
+	      }
+	      if (this.keyboard.isKeyPressed('s')) {
+	        dz = dtick;
+	      }
+	      if (this.keyboard.isKeyPressed('a')) {
+	        dx = -dtick;
+	      }
+	      if (this.keyboard.isKeyPressed('d')) {
+	        dx = dtick;
+	      }
+	
+	      this.player.position.x += dx;
+	      this.player.position.z += dz;
+	    }
+	  }, {
+	    key: 'eatEdibles',
+	    value: function eatEdibles() {
+	      for (var i = this.edibles.length - 1; i >= 0; i--) {
+	        var edible = this.edibles[i];
+	        if (this.player !== edible && this.player.containsPoint(edible.position) && this.player.energy > edible.energy) {
+	          this.player.energy += edible.energy;
+	          this.removeEdible(edible);
+	        }
+	        // TODO: else handle player possibly being eaten by another edible
+	      }
+	    }
+	  }, {
 	    key: 'setInitialCameraPosition',
 	    value: function setInitialCameraPosition() {
 	      this.setInitialCameraPos = true;
-	      var minDistance = this.controls.minDistance;
-	      var maxDistance = this.controls.maxDistance;
-	      var minPolarAngle = this.controls.minPolarAngle;
-	      var maxPolarAngle = this.controls.maxPolarAngle;
-	      this.controls.minDistance = 100;
-	      this.controls.maxDistance = this.controls.minDistance;
-	      this.controls.minPolarAngle = Math.PI / 3;
-	      this.controls.maxPolarAngle = this.controls.minPolarAngle;
-	      this.controls.update();
-	      this.controls.minDistance = minDistance;
-	      this.controls.maxDistance = maxDistance;
-	      this.controls.minPolarAngle = minPolarAngle;
-	      this.controls.maxPolarAngle = maxPolarAngle;
+	      var minDistance = this.cameraControls.minDistance;
+	      var maxDistance = this.cameraControls.maxDistance;
+	      var minPolarAngle = this.cameraControls.minPolarAngle;
+	      var maxPolarAngle = this.cameraControls.maxPolarAngle;
+	      this.cameraControls.minDistance = 100;
+	      this.cameraControls.maxDistance = this.cameraControls.minDistance;
+	      this.cameraControls.minPolarAngle = Math.PI / 3;
+	      this.cameraControls.maxPolarAngle = this.cameraControls.minPolarAngle;
+	      this.cameraControls.update();
+	      this.cameraControls.minDistance = minDistance;
+	      this.cameraControls.maxDistance = maxDistance;
+	      this.cameraControls.minPolarAngle = minPolarAngle;
+	      this.cameraControls.maxPolarAngle = maxPolarAngle;
 	    }
 	  }, {
 	    key: 'addEdible',
-	    value: function addEdible(x, y, z) {
-	      var color = Math.random() * 0xFFFFFF;
+	    value: function addEdible(x, y, z, color) {
 	      var edible = new _edible2.default(color);
 	      edible.position.x = x;
 	      edible.position.y = y;
 	      edible.position.z = z;
 	
 	      this.scene.add(edible.mesh);
+	      this.edibles.push(edible);
+	
+	      return edible;
+	    }
+	  }, {
+	    key: 'removeEdible',
+	    value: function removeEdible(edible) {
+	      this.scene.remove(edible.mesh);
+	      this.edibles.splice(this.edibles.indexOf(edible), 1);
+	    }
+	  }, {
+	    key: 'dispose',
+	    value: function dispose() {
+	      this.keyboard.dispose();
+	      this.cameraControls.dispose();
 	    }
 	  }, {
 	    key: 'domElement',
@@ -43141,14 +43201,35 @@
 	    _classCallCheck(this, Edible);
 	
 	    var geo = new THREE.BoxGeometry(1, 1, 1);
+	    geo.translate(0, 0.5, 0);
 	    var mat = new THREE.MeshStandardMaterial({ color: color });
 	    this.mesh = new THREE.Mesh(geo, mat);
+	
+	    this.energy = 1;
 	  }
 	
 	  _createClass(Edible, [{
+	    key: 'containsPoint',
+	    value: function containsPoint(pointWorldCoords) {
+	      // Just check x and z being within the scaled 2D bounds of the bottom face
+	      var pos = this.position;
+	      var halfsize = this.mesh.scale.x / 2;
+	      return pointWorldCoords.x >= pos.x - halfsize && pointWorldCoords.x <= pos.x + halfsize && pointWorldCoords.z >= pos.z - halfsize && pointWorldCoords.z <= pos.z + halfsize;
+	    }
+	  }, {
 	    key: 'position',
 	    get: function get() {
 	      return this.mesh.position;
+	    }
+	  }, {
+	    key: 'energy',
+	    get: function get() {
+	      return this.mesh.scale.x;
+	    },
+	    set: function set(value) {
+	      this.mesh.scale.x = value;
+	      this.mesh.scale.y = value;
+	      this.mesh.scale.z = value;
 	    }
 	  }]);
 	
@@ -43159,15 +43240,78 @@
 
 /***/ },
 /* 5 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var Keyboard = function () {
+	  function Keyboard() {
+	    var _this = this;
+	
+	    _classCallCheck(this, Keyboard);
+	
+	    this.onKeyDownHandler = function (event) {
+	      _this.onKeyChange(event, true);
+	    };
+	
+	    this.onKeyUpHandler = function (event) {
+	      _this.onKeyChange(event, false);
+	    };
+	
+	    window.addEventListener('keydown', this.onKeyDownHandler, false);
+	    window.addEventListener('keyup', this.onKeyUpHandler, false);
+	
+	    this.keyCodes = {};
+	    this.keyNameMap = {
+	      w: 87,
+	      s: 83,
+	      a: 65,
+	      d: 68
+	    };
+	  }
+	
+	  _createClass(Keyboard, [{
+	    key: 'isKeyPressed',
+	    value: function isKeyPressed(keyName) {
+	      return this.keyCodes[this.keyNameMap[keyName]] === true;
+	    }
+	  }, {
+	    key: 'onKeyChange',
+	    value: function onKeyChange(event, isPressed) {
+	      this.keyCodes[event.keyCode] = isPressed;
+	    }
+	  }, {
+	    key: 'dispose',
+	    value: function dispose() {
+	      window.removeEventListener('keydown', this.onKeyDownHandler);
+	      window.removeEventListener('keyup', this.onKeyUpHandler);
+	    }
+	  }]);
+	
+	  return Keyboard;
+	}();
+	
+	exports.default = Keyboard;
+
+/***/ },
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(6);
+	var content = __webpack_require__(7);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(8)(content, {});
+	var update = __webpack_require__(9)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -43184,10 +43328,10 @@
 	}
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(7)();
+	exports = module.exports = __webpack_require__(8)();
 	// imports
 	
 	
@@ -43198,7 +43342,7 @@
 
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports) {
 
 	/*
@@ -43254,7 +43398,7 @@
 
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
