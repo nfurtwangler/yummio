@@ -29,9 +29,11 @@ class Game {
 
     this.keyboard = new Keyboard(this.domElement);
 
-    const boardX = 400;
-    const boardY = 400;
-    const groundGeo = new THREE.PlaneGeometry(boardX, boardY);
+    this.boardSize = {
+      x: 400,
+      z: 400,
+    };
+    const groundGeo = new THREE.PlaneGeometry(this.boardSize.x, this.boardSize.z);
     const groundMat = new THREE.MeshStandardMaterial({ color: 0x00CC1F });
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
@@ -40,25 +42,28 @@ class Game {
     const initialEdibleCount = 50;
     this.edibles = [];
     for (let i = 0; i < initialEdibleCount; i++) {
-      const rx = (Math.random() - 0.5) * boardX;
-      const rz = (Math.random() - 0.5) * boardY;
+      const rx = (Math.random() - 0.5) * this.boardSize.x;
+      const rz = (Math.random() - 0.5) * this.boardSize.z;
       const rc = Math.random() * 0xFFFFFF;
       this.addEdible(rx, 0, rz, rc);
     }
 
     this.player = this.addEdible(0, 0, 0, 0xFFFFFF);
-    this.player.energy = 2;
+    this.player.size = 2;
   }
 
   get domElement() {
     return this.renderer.domElement;
   }
 
-  update() {
+  update(time) {
+    const dtMs = time - (this.lastTime || time);
+    this.lastTime = time;
+
     if (this.setInitialCameraPos === false) {
       this.setInitialCameraPosition();
     } else {
-      this.handleInput();
+      this.handleInput(dtMs);
       this.eatEdibles();
       this.cameraControls.update();
     }
@@ -66,33 +71,40 @@ class Game {
   draw() {
     this.renderer.render(this.scene, this.camera);
   }
-  handleInput() {
+  handleInput(dtMs) {
     let dx = 0;
     let dz = 0;
-    const dtick = 0.1; // TODO: should be time dependent
+    const distPerSec = 30;
+    const dist = distPerSec * (dtMs / 1000);
     if (this.keyboard.isKeyPressed('w')) {
-      dz = -dtick;
+      dz = -dist;
     }
     if (this.keyboard.isKeyPressed('s')) {
-      dz = dtick;
+      dz = dist;
     }
     if (this.keyboard.isKeyPressed('a')) {
-      dx = -dtick;
+      dx = -dist;
     }
     if (this.keyboard.isKeyPressed('d')) {
-      dx = dtick;
+      dx = dist;
     }
 
-    this.player.position.x += dx;
-    this.player.position.z += dz;
+    // Update player position
+    const nx = this.player.position.x + dx;
+    const nz = this.player.position.z + dz;
+    const playerHalfSize = this.player.size / 2;
+    this.player.position.x = Math.max(playerHalfSize - (this.boardSize.x / 2),
+                                      Math.min(nx, (this.boardSize.x / 2) - playerHalfSize));
+    this.player.position.z = Math.max(playerHalfSize - (this.boardSize.z / 2),
+                                      Math.min(nz, (this.boardSize.z / 2) - playerHalfSize));
   }
   eatEdibles() {
     for (let i = this.edibles.length - 1; i >= 0; i--) {
       const edible = this.edibles[i];
       if (this.player !== edible &&
           this.player.containsPoint(edible.position) &&
-          this.player.energy > edible.energy) {
-        this.player.energy += edible.energy;
+          this.player.size > edible.size) {
+        this.player.size += edible.size;
         this.removeEdible(edible);
       }
       // TODO: else handle player possibly being eaten by another edible

@@ -9,7 +9,7 @@ window.document.body.appendChild(game.domElement);
 function render() {
   window.requestAnimationFrame(render);
 
-  game.update();
+  game.update(window.performance.now());
   game.draw();
 }
 

@@ -61,7 +61,7 @@
 	function render() {
 	  window.requestAnimationFrame(render);
 	
-	  game.update();
+	  game.update(window.performance.now());
 	  game.draw();
 	}
 	
@@ -128,9 +128,11 @@
 	
 	    this.keyboard = new _keyboard2.default(this.domElement);
 	
-	    var boardX = 400;
-	    var boardY = 400;
-	    var groundGeo = new THREE.PlaneGeometry(boardX, boardY);
+	    this.boardSize = {
+	      x: 400,
+	      z: 400
+	    };
+	    var groundGeo = new THREE.PlaneGeometry(this.boardSize.x, this.boardSize.z);
 	    var groundMat = new THREE.MeshStandardMaterial({ color: 0x00CC1F });
 	    var ground = new THREE.Mesh(groundGeo, groundMat);
 	    ground.rotation.x = -Math.PI / 2;
@@ -139,23 +141,26 @@
 	    var initialEdibleCount = 50;
 	    this.edibles = [];
 	    for (var i = 0; i < initialEdibleCount; i++) {
-	      var rx = (Math.random() - 0.5) * boardX;
-	      var rz = (Math.random() - 0.5) * boardY;
+	      var rx = (Math.random() - 0.5) * this.boardSize.x;
+	      var rz = (Math.random() - 0.5) * this.boardSize.z;
 	      var rc = Math.random() * 0xFFFFFF;
 	      this.addEdible(rx, 0, rz, rc);
 	    }
 	
 	    this.player = this.addEdible(0, 0, 0, 0xFFFFFF);
-	    this.player.energy = 2;
+	    this.player.size = 2;
 	  }
 	
 	  _createClass(Game, [{
 	    key: 'update',
-	    value: function update() {
+	    value: function update(time) {
+	      var dtMs = time - (this.lastTime || time);
+	      this.lastTime = time;
+	
 	      if (this.setInitialCameraPos === false) {
 	        this.setInitialCameraPosition();
 	      } else {
-	        this.handleInput();
+	        this.handleInput(dtMs);
 	        this.eatEdibles();
 	        this.cameraControls.update();
 	      }
@@ -167,33 +172,38 @@
 	    }
 	  }, {
 	    key: 'handleInput',
-	    value: function handleInput() {
+	    value: function handleInput(dtMs) {
 	      var dx = 0;
 	      var dz = 0;
-	      var dtick = 0.1; // TODO: should be time dependent
+	      var distPerSec = 30;
+	      var dist = distPerSec * (dtMs / 1000);
 	      if (this.keyboard.isKeyPressed('w')) {
-	        dz = -dtick;
+	        dz = -dist;
 	      }
 	      if (this.keyboard.isKeyPressed('s')) {
-	        dz = dtick;
+	        dz = dist;
 	      }
 	      if (this.keyboard.isKeyPressed('a')) {
-	        dx = -dtick;
+	        dx = -dist;
 	      }
 	      if (this.keyboard.isKeyPressed('d')) {
-	        dx = dtick;
+	        dx = dist;
 	      }
 	
-	      this.player.position.x += dx;
-	      this.player.position.z += dz;
+	      // Update player position
+	      var nx = this.player.position.x + dx;
+	      var nz = this.player.position.z + dz;
+	      var playerHalfSize = this.player.size / 2;
+	      this.player.position.x = Math.max(playerHalfSize - this.boardSize.x / 2, Math.min(nx, this.boardSize.x / 2 - playerHalfSize));
+	      this.player.position.z = Math.max(playerHalfSize - this.boardSize.z / 2, Math.min(nz, this.boardSize.z / 2 - playerHalfSize));
 	    }
 	  }, {
 	    key: 'eatEdibles',
 	    value: function eatEdibles() {
 	      for (var i = this.edibles.length - 1; i >= 0; i--) {
 	        var edible = this.edibles[i];
-	        if (this.player !== edible && this.player.containsPoint(edible.position) && this.player.energy > edible.energy) {
-	          this.player.energy += edible.energy;
+	        if (this.player !== edible && this.player.containsPoint(edible.position) && this.player.size > edible.size) {
+	          this.player.size += edible.size;
 	          this.removeEdible(edible);
 	        }
 	        // TODO: else handle player possibly being eaten by another edible
@@ -43205,7 +43215,7 @@
 	    var mat = new THREE.MeshStandardMaterial({ color: color });
 	    this.mesh = new THREE.Mesh(geo, mat);
 	
-	    this.energy = 1;
+	    this.size = 1;
 	  }
 	
 	  _createClass(Edible, [{
@@ -43213,7 +43223,7 @@
 	    value: function containsPoint(pointWorldCoords) {
 	      // Just check x and z being within the scaled 2D bounds of the bottom face
 	      var pos = this.position;
-	      var halfsize = this.mesh.scale.x / 2;
+	      var halfsize = this.size / 2;
 	      return pointWorldCoords.x >= pos.x - halfsize && pointWorldCoords.x <= pos.x + halfsize && pointWorldCoords.z >= pos.z - halfsize && pointWorldCoords.z <= pos.z + halfsize;
 	    }
 	  }, {
@@ -43222,7 +43232,7 @@
 	      return this.mesh.position;
 	    }
 	  }, {
-	    key: 'energy',
+	    key: 'size',
 	    get: function get() {
 	      return this.mesh.scale.x;
 	    },
