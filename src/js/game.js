@@ -31,7 +31,7 @@ class Game {
 
     const loader = new THREE.TextureLoader();
     loader.load(
-      grassUrl,
+      './' + grassUrl,
       (texture) => {
         const groundGeo = new THREE.PlaneGeometry(this.boardSize.x, this.boardSize.z);
         texture.wrapS = THREE.RepeatWrapping;

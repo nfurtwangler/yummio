@@ -2,7 +2,8 @@
   "extends": "airbnb",
   "rules": {
     "no-plusplus": "off",
-    "no-param-reassign": ["error", { "props": false }]
+    "no-param-reassign": ["error", { "props": false }],
+    "prefer-template": "off"
   },
   "env": {
     "browser": true

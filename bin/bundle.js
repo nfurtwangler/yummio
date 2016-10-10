@@ -130,7 +130,7 @@
 	    };
 	
 	    var loader = new THREE.TextureLoader();
-	    loader.load(_grass2.default, function (texture) {
+	    loader.load('./' + _grass2.default, function (texture) {
 	      var groundGeo = new THREE.PlaneGeometry(_this.boardSize.x, _this.boardSize.z);
 	      texture.wrapS = THREE.RepeatWrapping;
 	      texture.wrapT = THREE.RepeatWrapping;
