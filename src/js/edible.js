@@ -7,6 +7,7 @@ class Edible {
     const mat = new THREE.MeshStandardMaterial({ color });
     this.mesh = new THREE.Mesh(geo, mat);
 
+    this.scaleAnimDuration = 250;
     this.size = 1;
   }
 
@@ -15,12 +16,27 @@ class Edible {
   }
 
   get size() {
-    return this.mesh.scale.x;
+    return this.destScale;
   }
   set size(value) {
-    this.mesh.scale.x = value;
-    this.mesh.scale.y = value;
-    this.mesh.scale.z = value;
+    this.fromScale = this.mesh.scale.x;
+    this.destScale = value;
+    this.scaleAnimRemainingMs = this.scaleAnimDuration;
+  }
+
+  update(timeMs) {
+    const dtMs = timeMs - (this.lastTimeMs || timeMs);
+    this.lastTimeMs = timeMs;
+
+    if (this.scaleAnimRemainingMs > 0) {
+      this.scaleAnimRemainingMs = Math.max(0, this.scaleAnimRemainingMs - dtMs);
+      const newScale = ((this.destScale * (this.scaleAnimDuration - this.scaleAnimRemainingMs)) +
+                        (this.fromScale * this.scaleAnimRemainingMs)) / this.scaleAnimDuration;
+
+      this.mesh.scale.x = newScale;
+      this.mesh.scale.y = newScale;
+      this.mesh.scale.z = newScale;
+    }
   }
 
   containsPoint(pointWorldCoords) {

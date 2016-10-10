@@ -153,9 +153,9 @@
 	
 	  _createClass(Game, [{
 	    key: 'update',
-	    value: function update(time) {
-	      var dtMs = time - (this.lastTime || time);
-	      this.lastTime = time;
+	    value: function update(timeMs) {
+	      var dtMs = timeMs - (this.lastTimeMs || timeMs);
+	      this.lastTimeMs = timeMs;
 	
 	      if (this.setInitialCameraPos === false) {
 	        this.setInitialCameraPosition();
@@ -163,6 +163,10 @@
 	        this.handleInput(dtMs);
 	        this.eatEdibles();
 	        this.cameraControls.update();
+	
+	        for (var i = this.edibles.length - 1; i >= 0; i--) {
+	          this.edibles[i].update(timeMs);
+	        }
 	      }
 	    }
 	  }, {
@@ -43215,10 +43219,26 @@
 	    var mat = new THREE.MeshStandardMaterial({ color: color });
 	    this.mesh = new THREE.Mesh(geo, mat);
 	
+	    this.scaleAnimDuration = 250;
 	    this.size = 1;
 	  }
 	
 	  _createClass(Edible, [{
+	    key: 'update',
+	    value: function update(timeMs) {
+	      var dtMs = timeMs - (this.lastTimeMs || timeMs);
+	      this.lastTimeMs = timeMs;
+	
+	      if (this.scaleAnimRemainingMs > 0) {
+	        this.scaleAnimRemainingMs = Math.max(0, this.scaleAnimRemainingMs - dtMs);
+	        var newScale = (this.destScale * (this.scaleAnimDuration - this.scaleAnimRemainingMs) + this.fromScale * this.scaleAnimRemainingMs) / this.scaleAnimDuration;
+	
+	        this.mesh.scale.x = newScale;
+	        this.mesh.scale.y = newScale;
+	        this.mesh.scale.z = newScale;
+	      }
+	    }
+	  }, {
 	    key: 'containsPoint',
 	    value: function containsPoint(pointWorldCoords) {
 	      // Just check x and z being within the scaled 2D bounds of the bottom face
@@ -43234,12 +43254,12 @@
 	  }, {
 	    key: 'size',
 	    get: function get() {
-	      return this.mesh.scale.x;
+	      return this.destScale;
 	    },
 	    set: function set(value) {
-	      this.mesh.scale.x = value;
-	      this.mesh.scale.y = value;
-	      this.mesh.scale.z = value;
+	      this.fromScale = this.mesh.scale.x;
+	      this.destScale = value;
+	      this.scaleAnimRemainingMs = this.scaleAnimDuration;
 	    }
 	  }]);
 	

@@ -56,9 +56,9 @@ class Game {
     return this.renderer.domElement;
   }
 
-  update(time) {
-    const dtMs = time - (this.lastTime || time);
-    this.lastTime = time;
+  update(timeMs) {
+    const dtMs = timeMs - (this.lastTimeMs || timeMs);
+    this.lastTimeMs = timeMs;
 
     if (this.setInitialCameraPos === false) {
       this.setInitialCameraPosition();
@@ -66,6 +66,10 @@ class Game {
       this.handleInput(dtMs);
       this.eatEdibles();
       this.cameraControls.update();
+
+      for (let i = this.edibles.length - 1; i >= 0; i--) {
+        this.edibles[i].update(timeMs);
+      }
     }
   }
   draw() {
