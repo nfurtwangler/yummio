@@ -8,19 +8,20 @@ class Edible {
     this.mesh = new THREE.Mesh(geo, mat);
 
     this.scaleAnimDuration = 250;
-    this.size = 1;
+    this.energy = 1;
   }
 
   get position() {
     return this.mesh.position;
   }
 
-  get size() {
-    return this.destScale;
+  get energy() {
+    return this.energyVal;
   }
-  set size(value) {
+  set energy(value) {
+    this.energyVal = value;
     this.fromScale = this.mesh.scale.x;
-    this.destScale = value;
+    this.destScale = Math.cbrt(this.energyVal);
     this.scaleAnimRemainingMs = this.scaleAnimDuration;
   }
 
@@ -42,7 +43,7 @@ class Edible {
   containsPoint(pointWorldCoords) {
     // Just check x and z being within the scaled 2D bounds of the bottom face
     const pos = this.position;
-    const halfsize = this.size / 2;
+    const halfsize = this.destScale / 2;
     return pointWorldCoords.x >= pos.x - halfsize &&
            pointWorldCoords.x <= pos.x + halfsize &&
            pointWorldCoords.z >= pos.z - halfsize &&

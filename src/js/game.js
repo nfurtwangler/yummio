@@ -1,10 +1,9 @@
 import * as THREE from 'three';
-import orbitControlsDef from 'three-orbit-controls';
 
 import Edible from './edible';
 import Keyboard from './keyboard';
 
-const OrbitControls = orbitControlsDef(THREE);
+import grassUrl from '../images/grass.jpg';
 
 class Game {
   constructor(width, height) {
@@ -14,18 +13,14 @@ class Game {
     this.renderer.setSize(width, height);
 
     this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    this.camera.lookAt(new THREE.Vector3(0, -1, -0.25));
+    this.camera.position.z = 10;
+    this.camera.position.y = 30;
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
     const himisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.75);
     this.scene.add(ambientLight);
     this.scene.add(himisphereLight);
-
-    this.cameraControls = new OrbitControls(this.camera, this.domElement);
-    this.cameraControls.minDistance = 10;
-    this.cameraControls.maxDistance = 300;
-    this.cameraControls.minPolarAngle = 0;
-    this.cameraControls.maxPolarAngle = Math.PI / 2.5;
-    this.setInitialCameraPos = false;
 
     this.keyboard = new Keyboard(this.domElement);
 
@@ -33,13 +28,23 @@ class Game {
       x: 400,
       z: 400,
     };
-    const groundGeo = new THREE.PlaneGeometry(this.boardSize.x, this.boardSize.z);
-    const groundMat = new THREE.MeshStandardMaterial({ color: 0x00CC1F });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    this.scene.add(ground);
 
-    const initialEdibleCount = 50;
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      grassUrl,
+      (texture) => {
+        const groundGeo = new THREE.PlaneGeometry(this.boardSize.x, this.boardSize.z);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(8, 8);
+        const groundMat = new THREE.MeshStandardMaterial({ map: texture });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        this.scene.add(ground);
+      }
+    );
+
+    const initialEdibleCount = 200;
     this.edibles = [];
     for (let i = 0; i < initialEdibleCount; i++) {
       const rx = (Math.random() - 0.5) * this.boardSize.x;
@@ -49,7 +54,8 @@ class Game {
     }
 
     this.player = this.addEdible(0, 0, 0, 0xFFFFFF);
-    this.player.size = 2;
+    this.player.energy = 2;
+    this.player.mesh.add(this.camera);
   }
 
   get domElement() {
@@ -60,16 +66,11 @@ class Game {
     const dtMs = timeMs - (this.lastTimeMs || timeMs);
     this.lastTimeMs = timeMs;
 
-    if (this.setInitialCameraPos === false) {
-      this.setInitialCameraPosition();
-    } else {
-      this.handleInput(dtMs);
-      this.eatEdibles();
-      this.cameraControls.update();
+    this.handleInput(dtMs);
+    this.eatEdibles();
 
-      for (let i = this.edibles.length - 1; i >= 0; i--) {
-        this.edibles[i].update(timeMs);
-      }
+    for (let i = this.edibles.length - 1; i >= 0; i--) {
+      this.edibles[i].update(timeMs);
     }
   }
   draw() {
@@ -96,7 +97,7 @@ class Game {
     // Update player position
     const nx = this.player.position.x + dx;
     const nz = this.player.position.z + dz;
-    const playerHalfSize = this.player.size / 2;
+    const playerHalfSize = Math.cbrt(this.player.energy) / 2;
     this.player.position.x = Math.max(playerHalfSize - (this.boardSize.x / 2),
                                       Math.min(nx, (this.boardSize.x / 2) - playerHalfSize));
     this.player.position.z = Math.max(playerHalfSize - (this.boardSize.z / 2),
@@ -107,28 +108,12 @@ class Game {
       const edible = this.edibles[i];
       if (this.player !== edible &&
           this.player.containsPoint(edible.position) &&
-          this.player.size > edible.size) {
-        this.player.size += edible.size;
+          this.player.energy > edible.energy) {
+        this.player.energy += edible.energy;
         this.removeEdible(edible);
       }
       // TODO: else handle player possibly being eaten by another edible
     }
-  }
-  setInitialCameraPosition() {
-    this.setInitialCameraPos = true;
-    const minDistance = this.cameraControls.minDistance;
-    const maxDistance = this.cameraControls.maxDistance;
-    const minPolarAngle = this.cameraControls.minPolarAngle;
-    const maxPolarAngle = this.cameraControls.maxPolarAngle;
-    this.cameraControls.minDistance = 100;
-    this.cameraControls.maxDistance = this.cameraControls.minDistance;
-    this.cameraControls.minPolarAngle = Math.PI / 3;
-    this.cameraControls.maxPolarAngle = this.cameraControls.minPolarAngle;
-    this.cameraControls.update();
-    this.cameraControls.minDistance = minDistance;
-    this.cameraControls.maxDistance = maxDistance;
-    this.cameraControls.minPolarAngle = minPolarAngle;
-    this.cameraControls.maxPolarAngle = maxPolarAngle;
   }
   addEdible(x, y, z, color) {
     const edible = new Edible(color);
