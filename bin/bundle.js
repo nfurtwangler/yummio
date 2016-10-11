@@ -50,7 +50,7 @@
 	
 	var _game2 = _interopRequireDefault(_game);
 	
-	__webpack_require__(6);
+	__webpack_require__(8);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -91,7 +91,15 @@
 	
 	var _keyboard2 = _interopRequireDefault(_keyboard);
 	
-	var _grass = __webpack_require__(5);
+	var _gamepad = __webpack_require__(5);
+	
+	var _gamepad2 = _interopRequireDefault(_gamepad);
+	
+	var _playercontroller = __webpack_require__(6);
+	
+	var _playercontroller2 = _interopRequireDefault(_playercontroller);
+	
+	var _grass = __webpack_require__(7);
 	
 	var _grass2 = _interopRequireDefault(_grass);
 	
@@ -122,8 +130,6 @@
 	    this.scene.add(ambientLight);
 	    this.scene.add(himisphereLight);
 	
-	    this.keyboard = new _keyboard2.default(this.domElement);
-	
 	    this.boardSize = {
 	      x: 400,
 	      z: 400
@@ -153,15 +159,18 @@
 	    this.player = this.addEdible(0, 0, 0, 0xFFFFFF);
 	    this.player.energy = 2;
 	    this.player.mesh.add(this.camera);
+	
+	    this.keyboard = new _keyboard2.default();
+	    this.gamepad = new _gamepad2.default();
+	
+	    this.playerController = new _playercontroller2.default(this.player, this.keyboard, this.gamepad, this.boardSize);
 	  }
 	
 	  _createClass(Game, [{
 	    key: 'update',
 	    value: function update(timeMs) {
-	      var dtMs = timeMs - (this.lastTimeMs || timeMs);
-	      this.lastTimeMs = timeMs;
-	
-	      this.handleInput(dtMs);
+	      this.gamepad.update();
+	      this.playerController.update(timeMs);
 	      this.eatEdibles();
 	
 	      for (var i = this.edibles.length - 1; i >= 0; i--) {
@@ -172,33 +181,6 @@
 	    key: 'draw',
 	    value: function draw() {
 	      this.renderer.render(this.scene, this.camera);
-	    }
-	  }, {
-	    key: 'handleInput',
-	    value: function handleInput(dtMs) {
-	      var dx = 0;
-	      var dz = 0;
-	      var distPerSec = 30;
-	      var dist = distPerSec * (dtMs / 1000);
-	      if (this.keyboard.isKeyPressed('w')) {
-	        dz = -dist;
-	      }
-	      if (this.keyboard.isKeyPressed('s')) {
-	        dz = dist;
-	      }
-	      if (this.keyboard.isKeyPressed('a')) {
-	        dx = -dist;
-	      }
-	      if (this.keyboard.isKeyPressed('d')) {
-	        dx = dist;
-	      }
-	
-	      // Update player position
-	      var nx = this.player.position.x + dx;
-	      var nz = this.player.position.z + dz;
-	      var playerHalfSize = Math.cbrt(this.player.energy) / 2;
-	      this.player.position.x = Math.max(playerHalfSize - this.boardSize.x / 2, Math.min(nx, this.boardSize.x / 2 - playerHalfSize));
-	      this.player.position.z = Math.max(playerHalfSize - this.boardSize.z / 2, Math.min(nz, this.boardSize.z / 2 - playerHalfSize));
 	    }
 	  }, {
 	    key: 'eatEdibles',
@@ -235,6 +217,7 @@
 	    key: 'dispose',
 	    value: function dispose() {
 	      this.keyboard.dispose();
+	      this.gamepad.dispose();
 	      this.cameraControls.dispose();
 	    }
 	  }, {
@@ -42190,21 +42173,201 @@
 
 /***/ },
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	module.exports = __webpack_require__.p + "750cbc4d9fa0e8f3c1ad5d78e64d28e1.jpg";
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var Gamepad = function () {
+	  function Gamepad() {
+	    var _this = this;
+	
+	    _classCallCheck(this, Gamepad);
+	
+	    this._onGamepadConnectedHandler = function (event) {
+	      _this._onConnectionChanged(event, true);
+	    };
+	
+	    this._onGamepadDisconnectedHandler = function (event) {
+	      _this._onConnectionChanged(event, false);
+	    };
+	
+	    window.addEventListener('gamepadconnected', this._onGamepadConnectedHandler, false);
+	    window.addEventListener('gamepaddisconnected', this._onGamepadDisconnectedHandler, false);
+	
+	    this._movement = {
+	      x: 0,
+	      y: 0
+	    };
+	
+	    this._tryGetGamepad();
+	  }
+	
+	  _createClass(Gamepad, [{
+	    key: 'update',
+	    value: function update() {
+	      if (this._gamepadId !== undefined) {
+	        var gamepads = window.navigator.getGamepads();
+	        for (var i = 0; i < gamepads.length; i++) {
+	          if (gamepads[i].id === this._gamepadId) {
+	            var nx = gamepads[i].axes[0];
+	            var ny = gamepads[i].axes[1];
+	            var deadzone = 0.1;
+	            this._movement.x = Math.abs(nx) > deadzone ? nx : 0;
+	            this._movement.y = Math.abs(ny) > deadzone ? ny : 0;
+	            break;
+	          }
+	        }
+	      }
+	    }
+	  }, {
+	    key: 'dispose',
+	    value: function dispose() {
+	      window.removeEventListener('gamepadconnected', this._onGamepadConnectedHandler);
+	      window.removeEventListener('gamepaddisconnected', this._onGamepadDisconnectedHandler);
+	    }
+	  }, {
+	    key: '_tryGetGamepad',
+	    value: function _tryGetGamepad() {
+	      if (this._gamepadId === undefined) {
+	        var gamepads = window.navigator.getGamepads();
+	        for (var i = 0; i < gamepads.length; i++) {
+	          if (gamepads[i] && gamepads[i].connected) {
+	            this._gamepadId = gamepads[i].id;
+	            break;
+	          }
+	        }
+	      }
+	    }
+	  }, {
+	    key: '_onConnectionChanged',
+	    value: function _onConnectionChanged(event, isConnected) {
+	      if (!isConnected && event.id === this._gamepadId) {
+	        this._gamepadId = undefined;
+	      }
+	
+	      this._tryGetGamepad();
+	    }
+	  }, {
+	    key: 'movement',
+	    get: function get() {
+	      if (this._gamepadId !== undefined) {
+	        return this._movement;
+	      }
+	
+	      return undefined;
+	    }
+	  }]);
+	
+	  return Gamepad;
+	}();
+	
+	exports.default = Gamepad;
 
 /***/ },
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _three = __webpack_require__(2);
+	
+	var THREE = _interopRequireWildcard(_three);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var PlayerController = function () {
+	  function PlayerController(player, keyboard, gamepad, boardSize) {
+	    _classCallCheck(this, PlayerController);
+	
+	    this.player = player;
+	    this.keyboard = keyboard;
+	    this.gamepad = gamepad;
+	    this.boardSize = boardSize;
+	
+	    this.acceleration = new THREE.Vector2(0, 0);
+	  }
+	
+	  _createClass(PlayerController, [{
+	    key: 'update',
+	    value: function update(timeMs) {
+	      var dtMs = timeMs - (this.lastTimeMs || timeMs);
+	      this.lastTimeMs = timeMs;
+	
+	      var dx = 0;
+	      var dz = 0;
+	      if (this.keyboard.isKeyPressed('w')) {
+	        dz += -1;
+	      }
+	      if (this.keyboard.isKeyPressed('s')) {
+	        dz += 1;
+	      }
+	      if (this.keyboard.isKeyPressed('a')) {
+	        dx += -1;
+	      }
+	      if (this.keyboard.isKeyPressed('d')) {
+	        dx += 1;
+	      }
+	
+	      var gamepadMovement = this.gamepad.movement;
+	      if (gamepadMovement !== undefined) {
+	        dx += gamepadMovement.x;
+	        dz += gamepadMovement.y;
+	      }
+	
+	      var maxDistPerSec = 30;
+	      var maxDist = maxDistPerSec * (dtMs / 1000);
+	      this.acceleration.set(dx * maxDist, dz * maxDist);
+	      this.acceleration.setLength(Math.min(maxDist, this.acceleration.length()));
+	
+	      // Move player
+	      var nx = this.player.position.x + this.acceleration.x;
+	      var nz = this.player.position.z + this.acceleration.y;
+	
+	      // Clamp to board
+	      var playerHalfSize = Math.cbrt(this.player.energy) / 2;
+	      this.player.position.x = Math.max(playerHalfSize - this.boardSize.x / 2, Math.min(nx, this.boardSize.x / 2 - playerHalfSize));
+	      this.player.position.z = Math.max(playerHalfSize - this.boardSize.z / 2, Math.min(nz, this.boardSize.z / 2 - playerHalfSize));
+	    }
+	  }]);
+	
+	  return PlayerController;
+	}();
+	
+	exports.default = PlayerController;
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = __webpack_require__.p + "750cbc4d9fa0e8f3c1ad5d78e64d28e1.jpg";
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(7);
+	var content = __webpack_require__(9);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(9)(content, {});
+	var update = __webpack_require__(11)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -42221,10 +42384,10 @@
 	}
 
 /***/ },
-/* 7 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(8)();
+	exports = module.exports = __webpack_require__(10)();
 	// imports
 	
 	
@@ -42235,7 +42398,7 @@
 
 
 /***/ },
-/* 8 */
+/* 10 */
 /***/ function(module, exports) {
 
 	/*
@@ -42291,7 +42454,7 @@
 
 
 /***/ },
-/* 9 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*

@@ -3,7 +3,8 @@
   "rules": {
     "no-plusplus": "off",
     "no-param-reassign": ["error", { "props": false }],
-    "prefer-template": "off"
+    "prefer-template": "off",
+    "no-underscore-dangle": "off"
   },
   "env": {
     "browser": true

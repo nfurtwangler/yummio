@@ -2,6 +2,8 @@ import * as THREE from 'three';
 
 import Edible from './edible';
 import Keyboard from './keyboard';
+import Gamepad from './gamepad';
+import PlayerController from './playercontroller';
 
 import grassUrl from '../images/grass.jpg';
 
@@ -21,8 +23,6 @@ class Game {
     const himisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.75);
     this.scene.add(ambientLight);
     this.scene.add(himisphereLight);
-
-    this.keyboard = new Keyboard(this.domElement);
 
     this.boardSize = {
       x: 400,
@@ -56,6 +56,16 @@ class Game {
     this.player = this.addEdible(0, 0, 0, 0xFFFFFF);
     this.player.energy = 2;
     this.player.mesh.add(this.camera);
+
+    this.keyboard = new Keyboard();
+    this.gamepad = new Gamepad();
+
+    this.playerController = new PlayerController(
+      this.player,
+      this.keyboard,
+      this.gamepad,
+      this.boardSize,
+    );
   }
 
   get domElement() {
@@ -63,10 +73,8 @@ class Game {
   }
 
   update(timeMs) {
-    const dtMs = timeMs - (this.lastTimeMs || timeMs);
-    this.lastTimeMs = timeMs;
-
-    this.handleInput(dtMs);
+    this.gamepad.update();
+    this.playerController.update(timeMs);
     this.eatEdibles();
 
     for (let i = this.edibles.length - 1; i >= 0; i--) {
@@ -75,33 +83,6 @@ class Game {
   }
   draw() {
     this.renderer.render(this.scene, this.camera);
-  }
-  handleInput(dtMs) {
-    let dx = 0;
-    let dz = 0;
-    const distPerSec = 30;
-    const dist = distPerSec * (dtMs / 1000);
-    if (this.keyboard.isKeyPressed('w')) {
-      dz = -dist;
-    }
-    if (this.keyboard.isKeyPressed('s')) {
-      dz = dist;
-    }
-    if (this.keyboard.isKeyPressed('a')) {
-      dx = -dist;
-    }
-    if (this.keyboard.isKeyPressed('d')) {
-      dx = dist;
-    }
-
-    // Update player position
-    const nx = this.player.position.x + dx;
-    const nz = this.player.position.z + dz;
-    const playerHalfSize = Math.cbrt(this.player.energy) / 2;
-    this.player.position.x = Math.max(playerHalfSize - (this.boardSize.x / 2),
-                                      Math.min(nx, (this.boardSize.x / 2) - playerHalfSize));
-    this.player.position.z = Math.max(playerHalfSize - (this.boardSize.z / 2),
-                                      Math.min(nz, (this.boardSize.z / 2) - playerHalfSize));
   }
   eatEdibles() {
     for (let i = this.edibles.length - 1; i >= 0; i--) {
@@ -132,6 +113,7 @@ class Game {
   }
   dispose() {
     this.keyboard.dispose();
+    this.gamepad.dispose();
     this.cameraControls.dispose();
   }
 }
