@@ -4,7 +4,8 @@
     "no-plusplus": "off",
     "no-param-reassign": ["error", { "props": false }],
     "prefer-template": "off",
-    "no-underscore-dangle": "off"
+    "no-underscore-dangle": "off",
+    "class-methods-use-this": "off"
   },
   "env": {
     "browser": true
