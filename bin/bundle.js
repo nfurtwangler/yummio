@@ -50,7 +50,7 @@
 	
 	var _game2 = _interopRequireDefault(_game);
 	
-	__webpack_require__(8);
+	__webpack_require__(10);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -83,25 +83,21 @@
 	
 	var THREE = _interopRequireWildcard(_three);
 	
-	var _edible = __webpack_require__(3);
-	
-	var _edible2 = _interopRequireDefault(_edible);
-	
-	var _keyboard = __webpack_require__(4);
+	var _keyboard = __webpack_require__(3);
 	
 	var _keyboard2 = _interopRequireDefault(_keyboard);
 	
-	var _gamepad = __webpack_require__(5);
+	var _gamepad = __webpack_require__(4);
 	
 	var _gamepad2 = _interopRequireDefault(_gamepad);
 	
-	var _playercontroller = __webpack_require__(6);
+	var _playscene = __webpack_require__(5);
 	
-	var _playercontroller2 = _interopRequireDefault(_playercontroller);
+	var _playscene2 = _interopRequireDefault(_playscene);
 	
-	var _grass = __webpack_require__(7);
+	var _mainmenuscene = __webpack_require__(9);
 	
-	var _grass2 = _interopRequireDefault(_grass);
+	var _mainmenuscene2 = _interopRequireDefault(_mainmenuscene);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -111,114 +107,38 @@
 	
 	var Game = function () {
 	  function Game(width, height) {
-	    var _this = this;
-	
 	    _classCallCheck(this, Game);
-	
-	    this.scene = new THREE.Scene();
 	
 	    this.renderer = new THREE.WebGLRenderer();
 	    this.renderer.setSize(width, height);
-	
-	    this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-	    this.camera.lookAt(new THREE.Vector3(0, -1, -0.25));
-	    this.camera.position.z = 10;
-	    this.camera.position.y = 30;
-	
-	    var ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
-	    var himisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.75);
-	    this.scene.add(ambientLight);
-	    this.scene.add(himisphereLight);
-	
-	    this.boardSize = {
-	      x: 400,
-	      z: 400
-	    };
-	
-	    var loader = new THREE.TextureLoader();
-	    loader.load('./' + _grass2.default, function (texture) {
-	      var groundGeo = new THREE.PlaneGeometry(_this.boardSize.x, _this.boardSize.z);
-	      texture.wrapS = THREE.RepeatWrapping;
-	      texture.wrapT = THREE.RepeatWrapping;
-	      texture.repeat.set(8, 8);
-	      var groundMat = new THREE.MeshStandardMaterial({ map: texture });
-	      var ground = new THREE.Mesh(groundGeo, groundMat);
-	      ground.rotation.x = -Math.PI / 2;
-	      _this.scene.add(ground);
-	    });
-	
-	    var initialEdibleCount = 200;
-	    this.edibles = [];
-	    for (var i = 0; i < initialEdibleCount; i++) {
-	      var rx = (Math.random() - 0.5) * this.boardSize.x;
-	      var rz = (Math.random() - 0.5) * this.boardSize.z;
-	      var rc = Math.random() * 0xFFFFFF;
-	      this.addEdible(rx, 0, rz, rc);
-	    }
-	
-	    this.player = this.addEdible(0, 0, 0, 0xFFFFFF);
-	    this.player.energy = 2;
-	    this.player.mesh.add(this.camera);
+	    this.renderer.autoClear = false;
 	
 	    this.keyboard = new _keyboard2.default();
 	    this.gamepad = new _gamepad2.default();
 	
-	    this.playerController = new _playercontroller2.default(this.player, this.keyboard, this.gamepad, this.boardSize);
+	    this.playScene = new _playscene2.default(width, height, this.keyboard, this.gamepad);
+	    this.mainMenuScene = new _mainmenuscene2.default(width, height);
 	  }
 	
 	  _createClass(Game, [{
 	    key: 'update',
 	    value: function update(timeMs) {
 	      this.gamepad.update();
-	      this.playerController.update(timeMs);
-	      this.eatEdibles();
-	
-	      for (var i = this.edibles.length - 1; i >= 0; i--) {
-	        this.edibles[i].update(timeMs);
-	      }
+	      this.playScene.update(timeMs);
 	    }
 	  }, {
 	    key: 'draw',
 	    value: function draw() {
-	      this.renderer.render(this.scene, this.camera);
-	    }
-	  }, {
-	    key: 'eatEdibles',
-	    value: function eatEdibles() {
-	      for (var i = this.edibles.length - 1; i >= 0; i--) {
-	        var edible = this.edibles[i];
-	        if (this.player !== edible && this.player.containsPoint(edible.position) && this.player.energy > edible.energy) {
-	          this.player.energy += edible.energy;
-	          this.removeEdible(edible);
-	        }
-	        // TODO: else handle player possibly being eaten by another edible
-	      }
-	    }
-	  }, {
-	    key: 'addEdible',
-	    value: function addEdible(x, y, z, color) {
-	      var edible = new _edible2.default(color);
-	      edible.position.x = x;
-	      edible.position.y = y;
-	      edible.position.z = z;
+	      this.renderer.clear();
 	
-	      this.scene.add(edible.mesh);
-	      this.edibles.push(edible);
-	
-	      return edible;
-	    }
-	  }, {
-	    key: 'removeEdible',
-	    value: function removeEdible(edible) {
-	      this.scene.remove(edible.mesh);
-	      this.edibles.splice(this.edibles.indexOf(edible), 1);
+	      this.playScene.draw(this.renderer);
+	      this.mainMenuScene.draw(this.renderer);
 	    }
 	  }, {
 	    key: 'dispose',
 	    value: function dispose() {
 	      this.keyboard.dispose();
 	      this.gamepad.dispose();
-	      this.cameraControls.dispose();
 	    }
 	  }, {
 	    key: 'domElement',
@@ -42031,85 +41951,6 @@
 
 /***/ },
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-	
-	var _three = __webpack_require__(2);
-	
-	var THREE = _interopRequireWildcard(_three);
-	
-	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-	
-	var Edible = function () {
-	  function Edible(color) {
-	    _classCallCheck(this, Edible);
-	
-	    var geo = new THREE.BoxGeometry(1, 1, 1);
-	    geo.translate(0, 0.5, 0);
-	    var mat = new THREE.MeshStandardMaterial({ color: color });
-	    this.mesh = new THREE.Mesh(geo, mat);
-	
-	    this.scaleAnimDuration = 250;
-	    this.energy = 1;
-	  }
-	
-	  _createClass(Edible, [{
-	    key: 'update',
-	    value: function update(timeMs) {
-	      var dtMs = timeMs - (this.lastTimeMs || timeMs);
-	      this.lastTimeMs = timeMs;
-	
-	      if (this.scaleAnimRemainingMs > 0) {
-	        this.scaleAnimRemainingMs = Math.max(0, this.scaleAnimRemainingMs - dtMs);
-	        var newScale = (this.destScale * (this.scaleAnimDuration - this.scaleAnimRemainingMs) + this.fromScale * this.scaleAnimRemainingMs) / this.scaleAnimDuration;
-	
-	        this.mesh.scale.x = newScale;
-	        this.mesh.scale.y = newScale;
-	        this.mesh.scale.z = newScale;
-	      }
-	    }
-	  }, {
-	    key: 'containsPoint',
-	    value: function containsPoint(pointWorldCoords) {
-	      // Just check x and z being within the scaled 2D bounds of the bottom face
-	      var pos = this.position;
-	      var halfsize = this.destScale / 2;
-	      return pointWorldCoords.x >= pos.x - halfsize && pointWorldCoords.x <= pos.x + halfsize && pointWorldCoords.z >= pos.z - halfsize && pointWorldCoords.z <= pos.z + halfsize;
-	    }
-	  }, {
-	    key: 'position',
-	    get: function get() {
-	      return this.mesh.position;
-	    }
-	  }, {
-	    key: 'energy',
-	    get: function get() {
-	      return this.energyVal;
-	    },
-	    set: function set(value) {
-	      this.energyVal = value;
-	      this.fromScale = this.mesh.scale.x;
-	      this.destScale = Math.cbrt(this.energyVal);
-	      this.scaleAnimRemainingMs = this.scaleAnimDuration;
-	    }
-	  }]);
-	
-	  return Edible;
-	}();
-	
-	exports.default = Edible;
-
-/***/ },
-/* 4 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -42172,7 +42013,7 @@
 	exports.default = Keyboard;
 
 /***/ },
-/* 5 */
+/* 4 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -42272,7 +42113,224 @@
 	exports.default = Gamepad;
 
 /***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _three = __webpack_require__(2);
+	
+	var THREE = _interopRequireWildcard(_three);
+	
+	var _edible = __webpack_require__(6);
+	
+	var _edible2 = _interopRequireDefault(_edible);
+	
+	var _playercontroller = __webpack_require__(7);
+	
+	var _playercontroller2 = _interopRequireDefault(_playercontroller);
+	
+	var _grass = __webpack_require__(8);
+	
+	var _grass2 = _interopRequireDefault(_grass);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var PlayScene = function () {
+	  function PlayScene(width, height, keyboard, gamepad) {
+	    var _this = this;
+	
+	    _classCallCheck(this, PlayScene);
+	
+	    this.scene = new THREE.Scene();
+	
+	    this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+	    this.camera.lookAt(new THREE.Vector3(0, -1, -0.25));
+	    this.camera.position.z = 10;
+	    this.camera.position.y = 30;
+	
+	    var ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+	    var himisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.75);
+	    this.scene.add(ambientLight);
+	    this.scene.add(himisphereLight);
+	
+	    this.boardSize = {
+	      x: 400,
+	      z: 400
+	    };
+	
+	    var loader = new THREE.TextureLoader();
+	    loader.load('./' + _grass2.default, function (texture) {
+	      var groundGeo = new THREE.PlaneGeometry(_this.boardSize.x, _this.boardSize.z);
+	      texture.wrapS = THREE.RepeatWrapping;
+	      texture.wrapT = THREE.RepeatWrapping;
+	      texture.repeat.set(8, 8);
+	      var groundMat = new THREE.MeshStandardMaterial({ map: texture });
+	      var ground = new THREE.Mesh(groundGeo, groundMat);
+	      ground.rotation.x = -Math.PI / 2;
+	      _this.scene.add(ground);
+	    });
+	
+	    var initialEdibleCount = 200;
+	    this.edibles = [];
+	    for (var i = 0; i < initialEdibleCount; i++) {
+	      var rx = (Math.random() - 0.5) * this.boardSize.x;
+	      var rz = (Math.random() - 0.5) * this.boardSize.z;
+	      var rc = Math.random() * 0xFFFFFF;
+	      this.addEdible(rx, 0, rz, rc);
+	    }
+	
+	    this.player = this.addEdible(0, 0, 0, 0xFFFFFF);
+	    this.player.energy = 2;
+	    this.player.mesh.add(this.camera);
+	
+	    this.playerController = new _playercontroller2.default(this.player, keyboard, gamepad, this.boardSize);
+	  }
+	
+	  _createClass(PlayScene, [{
+	    key: 'update',
+	    value: function update(timeMs) {
+	      this.playerController.update(timeMs);
+	      this.eatEdibles();
+	
+	      for (var i = this.edibles.length - 1; i >= 0; i--) {
+	        this.edibles[i].update(timeMs);
+	      }
+	    }
+	  }, {
+	    key: 'draw',
+	    value: function draw(renderer) {
+	      renderer.render(this.scene, this.camera);
+	    }
+	  }, {
+	    key: 'eatEdibles',
+	    value: function eatEdibles() {
+	      for (var i = this.edibles.length - 1; i >= 0; i--) {
+	        var edible = this.edibles[i];
+	        if (this.player !== edible && this.player.containsPoint(edible.position) && this.player.energy > edible.energy) {
+	          this.player.energy += edible.energy;
+	          this.removeEdible(edible);
+	        }
+	        // TODO: else handle player possibly being eaten by another edible
+	      }
+	    }
+	  }, {
+	    key: 'addEdible',
+	    value: function addEdible(x, y, z, color) {
+	      var edible = new _edible2.default(color);
+	      edible.position.x = x;
+	      edible.position.y = y;
+	      edible.position.z = z;
+	
+	      this.scene.add(edible.mesh);
+	      this.edibles.push(edible);
+	
+	      return edible;
+	    }
+	  }, {
+	    key: 'removeEdible',
+	    value: function removeEdible(edible) {
+	      this.scene.remove(edible.mesh);
+	      this.edibles.splice(this.edibles.indexOf(edible), 1);
+	    }
+	  }]);
+	
+	  return PlayScene;
+	}();
+	
+	exports.default = PlayScene;
+
+/***/ },
 /* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _three = __webpack_require__(2);
+	
+	var THREE = _interopRequireWildcard(_three);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var Edible = function () {
+	  function Edible(color) {
+	    _classCallCheck(this, Edible);
+	
+	    var geo = new THREE.BoxGeometry(1, 1, 1);
+	    geo.translate(0, 0.5, 0);
+	    var mat = new THREE.MeshStandardMaterial({ color: color });
+	    this.mesh = new THREE.Mesh(geo, mat);
+	
+	    this.scaleAnimDuration = 250;
+	    this.energy = 1;
+	  }
+	
+	  _createClass(Edible, [{
+	    key: 'update',
+	    value: function update(timeMs) {
+	      var dtMs = timeMs - (this.lastTimeMs || timeMs);
+	      this.lastTimeMs = timeMs;
+	
+	      if (this.scaleAnimRemainingMs > 0) {
+	        this.scaleAnimRemainingMs = Math.max(0, this.scaleAnimRemainingMs - dtMs);
+	        var newScale = (this.destScale * (this.scaleAnimDuration - this.scaleAnimRemainingMs) + this.fromScale * this.scaleAnimRemainingMs) / this.scaleAnimDuration;
+	
+	        this.mesh.scale.x = newScale;
+	        this.mesh.scale.y = newScale;
+	        this.mesh.scale.z = newScale;
+	      }
+	    }
+	  }, {
+	    key: 'containsPoint',
+	    value: function containsPoint(pointWorldCoords) {
+	      // Just check x and z being within the scaled 2D bounds of the bottom face
+	      var pos = this.position;
+	      var halfsize = this.destScale / 2;
+	      return pointWorldCoords.x >= pos.x - halfsize && pointWorldCoords.x <= pos.x + halfsize && pointWorldCoords.z >= pos.z - halfsize && pointWorldCoords.z <= pos.z + halfsize;
+	    }
+	  }, {
+	    key: 'position',
+	    get: function get() {
+	      return this.mesh.position;
+	    }
+	  }, {
+	    key: 'energy',
+	    get: function get() {
+	      return this.energyVal;
+	    },
+	    set: function set(value) {
+	      this.energyVal = value;
+	      this.fromScale = this.mesh.scale.x;
+	      this.destScale = Math.cbrt(this.energyVal);
+	      this.scaleAnimRemainingMs = this.scaleAnimDuration;
+	    }
+	  }]);
+	
+	  return Edible;
+	}();
+	
+	exports.default = Edible;
+
+/***/ },
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -42352,22 +42410,75 @@
 	exports.default = PlayerController;
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__.p + "750cbc4d9fa0e8f3c1ad5d78e64d28e1.jpg";
 
 /***/ },
-/* 8 */
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _three = __webpack_require__(2);
+	
+	var THREE = _interopRequireWildcard(_three);
+	
+	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var MainMenuScene = function () {
+	  function MainMenuScene(width, height) {
+	    _classCallCheck(this, MainMenuScene);
+	
+	    this.scene = new THREE.Scene();
+	
+	    this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+	    this.camera.lookAt(new THREE.Vector3(0, -1, 0));
+	    this.camera.position.y = 30;
+	
+	    var ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+	    var himisphereLight = new THREE.HemisphereLight(0xffffbb, 0x080820, 0.75);
+	    this.scene.add(ambientLight);
+	    this.scene.add(himisphereLight);
+	  }
+	
+	  _createClass(MainMenuScene, [{
+	    key: 'update',
+	    value: function update() {
+	      // do nothing.
+	    }
+	  }, {
+	    key: 'draw',
+	    value: function draw(renderer) {
+	      renderer.render(this.scene, this.camera);
+	    }
+	  }]);
+	
+	  return MainMenuScene;
+	}();
+	
+	exports.default = MainMenuScene;
+
+/***/ },
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(9);
+	var content = __webpack_require__(11);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(11)(content, {});
+	var update = __webpack_require__(13)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(false) {
@@ -42384,10 +42495,10 @@
 	}
 
 /***/ },
-/* 9 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(10)();
+	exports = module.exports = __webpack_require__(12)();
 	// imports
 	
 	
@@ -42398,7 +42509,7 @@
 
 
 /***/ },
-/* 10 */
+/* 12 */
 /***/ function(module, exports) {
 
 	/*
@@ -42454,7 +42565,7 @@
 
 
 /***/ },
-/* 11 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
