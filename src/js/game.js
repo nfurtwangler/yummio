@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 
-import Keyboard from './keyboard';
-import Gamepad from './gamepad';
-import PlayScene from './playscene';
-import MainMenuScene from './mainmenuscene';
+import Keyboard from './input/Keyboard';
+import Gamepad from './input/Gamepad';
+import PlayScene from './scenes/PlayScene';
+import MainMenuScene from './scenes/MainMenuScene';
 
 class Game {
   constructor(width, height) {

@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 
-import Edible from './edible';
-import PlayerController from './playercontroller';
+import Edible from '../Edible';
+import PlayerController from '../PlayerController';
 
-import grassUrl from '../images/grass.jpg';
+import grassUrl from '../../images/grass.jpg';
 
 class PlayScene {
   constructor(width, height, keyboard, gamepad) {

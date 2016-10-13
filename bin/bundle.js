@@ -46,15 +46,15 @@
 
 	'use strict';
 	
-	var _game = __webpack_require__(1);
+	var _Game = __webpack_require__(1);
 	
-	var _game2 = _interopRequireDefault(_game);
+	var _Game2 = _interopRequireDefault(_Game);
 	
 	__webpack_require__(10);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	var game = new _game2.default(window.innerWidth, window.innerHeight);
+	var game = new _Game2.default(window.innerWidth, window.innerHeight);
 	
 	window.document.body.appendChild(game.domElement);
 	
@@ -83,21 +83,21 @@
 	
 	var THREE = _interopRequireWildcard(_three);
 	
-	var _keyboard = __webpack_require__(3);
+	var _Keyboard = __webpack_require__(3);
 	
-	var _keyboard2 = _interopRequireDefault(_keyboard);
+	var _Keyboard2 = _interopRequireDefault(_Keyboard);
 	
-	var _gamepad = __webpack_require__(4);
+	var _Gamepad = __webpack_require__(4);
 	
-	var _gamepad2 = _interopRequireDefault(_gamepad);
+	var _Gamepad2 = _interopRequireDefault(_Gamepad);
 	
-	var _playscene = __webpack_require__(5);
+	var _PlayScene = __webpack_require__(5);
 	
-	var _playscene2 = _interopRequireDefault(_playscene);
+	var _PlayScene2 = _interopRequireDefault(_PlayScene);
 	
-	var _mainmenuscene = __webpack_require__(9);
+	var _MainMenuScene = __webpack_require__(9);
 	
-	var _mainmenuscene2 = _interopRequireDefault(_mainmenuscene);
+	var _MainMenuScene2 = _interopRequireDefault(_MainMenuScene);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -113,11 +113,11 @@
 	    this.renderer.setSize(width, height);
 	    this.renderer.autoClear = false;
 	
-	    this.keyboard = new _keyboard2.default();
-	    this.gamepad = new _gamepad2.default();
+	    this.keyboard = new _Keyboard2.default();
+	    this.gamepad = new _Gamepad2.default();
 	
-	    this.playScene = new _playscene2.default(width, height, this.keyboard, this.gamepad);
-	    this.mainMenuScene = new _mainmenuscene2.default(width, height);
+	    this.playScene = new _PlayScene2.default(width, height, this.keyboard, this.gamepad);
+	    this.mainMenuScene = new _MainMenuScene2.default(width, height);
 	  }
 	
 	  _createClass(Game, [{
@@ -42128,13 +42128,13 @@
 	
 	var THREE = _interopRequireWildcard(_three);
 	
-	var _edible = __webpack_require__(6);
+	var _Edible = __webpack_require__(6);
 	
-	var _edible2 = _interopRequireDefault(_edible);
+	var _Edible2 = _interopRequireDefault(_Edible);
 	
-	var _playercontroller = __webpack_require__(7);
+	var _PlayerController = __webpack_require__(7);
 	
-	var _playercontroller2 = _interopRequireDefault(_playercontroller);
+	var _PlayerController2 = _interopRequireDefault(_PlayerController);
 	
 	var _grass = __webpack_require__(8);
 	
@@ -42194,7 +42194,7 @@
 	    this.player.energy = 2;
 	    this.player.mesh.add(this.camera);
 	
-	    this.playerController = new _playercontroller2.default(this.player, keyboard, gamepad, this.boardSize);
+	    this.playerController = new _PlayerController2.default(this.player, keyboard, gamepad, this.boardSize);
 	  }
 	
 	  _createClass(PlayScene, [{
@@ -42227,7 +42227,7 @@
 	  }, {
 	    key: 'addEdible',
 	    value: function addEdible(x, y, z, color) {
-	      var edible = new _edible2.default(color);
+	      var edible = new _Edible2.default(color);
 	      edible.position.x = x;
 	      edible.position.y = y;
 	      edible.position.z = z;
