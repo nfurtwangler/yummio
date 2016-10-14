@@ -25,11 +25,16 @@ class Game {
   update(timeMs) {
     this.gamepad.update();
     this.playScene.update(timeMs);
+    this.mainMenuScene.update(timeMs);
   }
   draw() {
     this.renderer.clear();
 
     this.playScene.draw(this.renderer);
+
+    // Clear only the depth and stencil buffers between scene rendering
+    this.renderer.clear(false, true, true);
+
     this.mainMenuScene.draw(this.renderer);
   }
   dispose() {
